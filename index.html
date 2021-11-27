@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://threejs.org/build/three.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="https://threejs.org/examples/js/loaders/GLTFLoader.js"></script>
+
+<script src="https://threejs.org/examples/js/controls/DragControls.js"></script>
+
+<style>
+
+body {
+	background-color: rgb(196, 196, 196);
+	margin: 0px;
+	overflow: hidden;
+}
+
+
+</style>
+
+</head>
+<body>
+    
+
+
+<script >
+// Simple three.js example
+
+var mesh, renderer, scene, camera, controls,dragControls,group
+var dragobjects =[];
+var helice;
+var helicegroup;
+var helicesmall;
+var helilight;
+var light1;
+var clock; 
+init();
+animate();
+
+function init() {
+
+    // renderer
+/*
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
+*/
+
+        scene = new THREE.Scene()
+        //scene.background = new THREE.Color( 0xff0000 );
+        //scene.fog = new THREE.FogExp2(0xff0000, 500, 1000)
+        //scene.fog = new THREE.FogExp2(0xff0000, 0.1)
+
+        const near = 1;
+        const far = 2;
+        const color = 'lightblue';
+        scene.fog = new THREE.Fog(color, near, far);
+        scene.background = new THREE.Color(color);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true })
+        renderer.setSize(window.innerWidth, window.innerHeight)
+        renderer.setClearColor(scene.fog.color)
+        
+        renderer.outputEncoding = THREE.sRGBEncoding
+
+        renderer.shadowMap.enabled = true
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap
+
+        document.body.appendChild(renderer.domElement)
+
+
+    clock = new THREE.Clock(true);
+    // scene
+    scene = new THREE.Scene();
+    
+    // camera
+    camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 10000 );
+    camera.position.set( 20, 20, 20 );
+
+    // controls
+    controls = new THREE.OrbitControls( camera, renderer.domElement );
+    
+    // ambient
+    //scene.add( new THREE.AmbientLight( 0x666666 ) );
+    
+
+    var hemisphereLight = new THREE.HemisphereLight(0xffffff, 1);
+     scene.add(hemisphereLight);
+
+    // light
+    
+    /*var light = new THREE.DirectionalLight( 0xffffff, 1 );
+    light.position.set( 20, 20, 0 );
+    scene.add( light );*/
+
+
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2)
+        const distance = 150
+        directionalLight.position.set(-distance, distance, distance)
+
+        directionalLight.castShadow = true
+
+        directionalLight.shadow.mapSize.width = 1024*4
+        directionalLight.shadow.mapSize.height = 1024*4
+
+        directionalLight.shadow.camera.left = -distance
+        directionalLight.shadow.camera.right = distance
+        directionalLight.shadow.camera.top = distance
+        directionalLight.shadow.camera.bottom = -distance
+
+        directionalLight.shadow.camera.far = 3 * distance
+        directionalLight.shadow.camera.near = distance
+
+        scene.add(directionalLight)
+
+
+
+         //// sound
+
+
+             const listener = new THREE.AudioListener();
+            camera.add( listener );
+
+            // create a global audio source
+            const sound = new THREE.Audio( listener );
+
+            // load a sound and set it as the Audio object's buffer
+            const audioLoader = new THREE.AudioLoader();
+            audioLoader.load( 'helicopter.mp3', function( buffer ) {
+                sound.setBuffer( buffer );
+                sound.setLoop( true );
+                sound.setVolume( 0.2 );
+                sound.play();
+            });
+
+
+         /// sound end
+        
+
+        /*
+        const sphere = new THREE.SphereGeometry( 0.2, 16, 8 );
+        light1 = new THREE.PointLight( 0xff0000, 210, 50 );
+		light1.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xff0000 } ) ) );
+		scene.add( light1 );
+        */
+
+    
+
+     // Floor
+        const floorGeometry = new THREE.PlaneBufferGeometry(300, 300, 1, 1)
+        floorGeometry.rotateX(-Math.PI / 2)
+        //const floorMaterial = new THREE.MeshLambertMaterial({ color: 0x777777 })
+        
+  /*      
+        const floorMaterial = new THREE.MeshLambertMaterial({
+            color: 0x555555, side:THREE.DoubleSide
+        });
+
+
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial)
+        floor.receiveShadow = true
+        scene.add(floor)
+*/
+
+
+        const loader = new THREE.TextureLoader();
+
+        var floorTexture = new THREE.ImageUtils.loadTexture('cesped.jpg');
+        floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+        floorTexture.repeat.set(16,16);
+
+        //const floorMaterial = new THREE.MeshBasicMaterial({
+            //map: loader.load('piso.jpg'),
+        //});
+
+        const floorMaterial = new THREE.MeshLambertMaterial({
+            map: floorTexture, side:THREE.DoubleSide
+        });
+
+
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial)
+        floor.receiveShadow = true
+        scene.add(floor)
+
+
+
+
+
+
+
+    // axes
+    scene.add( new THREE.AxesHelper( 20 ) );
+    
+    var group = new THREE.Group();
+    group.position.set(1,1,1);
+    scene.add(group);
+    
+    
+    var group1 = new THREE.Group();
+    group1.position.set(2,2,2);
+    group.rotation.set(0,0,1);
+    group.add(group1);    
+    
+    // geometry
+    var geometry = new THREE.SphereGeometry( 15, 32, 32 );
+    // material
+    var material = new THREE.MeshPhongMaterial( {
+        color: 0x00ffff, 
+        flatShading: false,
+        transparent: false,
+        opacity: 1,
+    
+    } );
+    
+    
+    // mesh
+    mesh = new THREE.Mesh( geometry, material );
+    mesh.position.x = 3;
+    mesh.position.y = 20;
+    mesh.position.z = 50;
+    mesh.castShadow = true
+    mesh.receiveShadow = true
+    group.add( mesh );
+    
+
+    
+    //add following code in init function
+    var gltfobject = addGLTFObjectIntoScene();
+    scene.add(gltfobject);
+
+    var helipad = addHeliPad();
+    scene.add(helipad);
+
+    dragobjects.push(mesh);
+ //   dragControls = new THREE.DragControls([mesh], camera, renderer.domElement );
+    dragControls = new THREE.DragControls(dragobjects, camera, renderer.domElement );
+    dragControls.addEventListener('dragstart', function (event){ 
+
+       //if (dragobjects[1].position.y < 50)
+        //dragobjects[1].position.y = 50;
+
+       controls.enabled = false; 
+    });
+    dragControls.addEventListener( 'dragend', function (event) {
+       controls.enabled = true; 
+    });
+}
+
+function animate() {
+
+    //if (helice !== undefined) helice.rotateY(1);
+    if (helicegroup !== undefined) { 
+        //console.log(helicegroup.position.y,helicegroup.position.x)
+        //console.log(mesh.children[0])
+        helicegroup.rotateY(0.2);
+    }
+    if (helicesmall !== undefined) helicesmall.rotateZ(0.8);
+    
+    
+    if (light1 !== undefined){
+        if (Math.trunc(clock.getElapsedTime()) % 2 == 0){
+            
+            //console.log(helilight); 
+            light1.visible = true;
+            //helilight.alphaToCoverage = true;
+            
+
+            light1.color.r = 1;
+
+        }
+        else{
+            //helilight.
+            //helilight.visible = false;
+            light1.visible = false;
+            //helilight.alphaToCoverage = true;
+            
+            light1.color.r = 0;
+        }
+            
+        
+        //console.log(clock.getElapsedTime())
+    }
+    
+    
+
+    requestAnimationFrame( animate );
+    
+    controls.update();
+
+    renderer.render( scene, camera );
+
+}
+
+function drawBox(objectwidth,objectheight,objectdepth){
+    var geometry, material, box;
+    geometry = new THREE.BoxGeometry(objectwidth,objectheight,objectdepth);
+    material = new THREE.MeshBasicMaterial({color: 0xffff00, transparent: true, opacity: 0,depthTest:false});
+    box = new THREE.Mesh(geometry, material);
+    dragobjects.push(box);
+    box.position.set(0, objectheight/2 , 0);
+    return box;
+};  
+function addGLTFObjectIntoScene(){ 
+    group = new THREE.Group();
+    var loader = new THREE.GLTFLoader();
+    //let url = 'low_poly_car_-_chevrolet_c10_pickup_1963/scene.gltf';
+    let url = 'ah-1w_hueycobra/scene.gltf';
+    
+    loader.load( url, ( gltf ) => {
+        
+        mesh = gltf.scene;
+        
+        mesh.scale.set( 0.8, 0.8, 0.8);
+        
+        mesh.traverse( function( node ) {
+
+            if ( node.isMesh ) { node.castShadow = true; }
+            if ( node.isMesh || node.isLight ) node.receiveShadow = true;
+
+        } );
+     
+        
+        var bbox = new THREE.Box3();
+        var cent = new THREE.Vector3();
+        bbox.setFromObject(mesh);
+        bbox.getCenter(cent);
+
+        console.log("actual center ", cent);
+        
+        mesh.traverse(function(child) {
+            if (child instanceof THREE.Mesh) {
+                child.geometry.translate(-cent.x, -cent.y, -cent.z);
+            }
+        });
+       
+        
+        /*
+        var textureLoader = new THREE.TextureLoader();
+        var texture = textureLoader.load('https://static.turbosquid.com/Preview/2014/08/01__18_43_57/Earth_color_8000x4000.jpg5c815051-c88c-4df4-ad63-e3f08d576e12Original.jpg');
+        
+        mesh.traverse( function ( child ) {
+
+            if ( child.isMesh ) {
+
+                child.material.envMap = texture; //reflection of the world
+
+            }
+
+        } );
+        */
+
+        var gltfbox = new THREE.Box3().setFromObject( mesh );
+        console.log(gltfbox.max.x - gltfbox.min.x)
+        //var objectwidth = Math.floor(gltfbox.getSize().x);
+        var objectwidth = Math.floor(gltfbox.max.x - gltfbox.min.x);
+        
+        //var objectheight = Math.floor(gltfbox.getSize().y);
+        var objectheight = Math.floor(gltfbox.max.y - gltfbox.min.y);
+        //var objectdepth = Math.floor(gltfbox.getSize().z);
+        var objectdepth = Math.floor(gltfbox.max.z - gltfbox.min.z);
+
+        objectwidth = objectwidth + parseInt(2);
+        objectheight = objectheight + parseInt(2);
+        objectdepth  = objectdepth + parseInt(1);
+
+        mesh.position.set(20, 0, 12);
+
+        helicegroup = new THREE.Group();
+
+        helicegroup.add(mesh.getObjectByName('Object_13'));
+        helicegroup.add(mesh.getObjectByName('Object_14'));
+        helicegroup.add(mesh.getObjectByName('Object_15'));
+        helicegroup.add(mesh.getObjectByName('Object_16'));
+        helicegroup.add(mesh.getObjectByName('Object_17'));
+
+
+      
+        //helice = mesh.getObjectByName('Object_17');
+
+        var pivot = new THREE.Group();
+        scene.add( pivot );
+        //pivot.add( helice );
+        pivot.add( helicegroup );
+
+        mesh.add(pivot);
+        
+        
+        
+        bbox = new THREE.Box3();
+        cent = new THREE.Vector3();
+        //bbox.setFromObject(helice);
+        bbox.setFromObject(helicegroup);
+        bbox.getCenter(cent);
+
+        helicegroup.traverse(function(child) {
+            if (child instanceof THREE.Mesh) {
+                child.geometry.translate(-cent.x, -cent.y, -cent.z);
+            }
+        });
+       
+        //helice.position.set(cent.x, cent.y, cent.z);
+        helicegroup.position.set(cent.x, cent.y, cent.z);
+        
+       ////////// elice pequeño
+
+
+        helicesmall = new THREE.Group();
+        helicesmall.add(mesh.getObjectByName('Object_11'));
+        helicesmall.add(mesh.getObjectByName('Object_18'));
+        
+
+        var pivot2 = new THREE.Group();
+        scene.add( pivot2 );
+        //pivot.add( helice );
+        pivot2.add( helicesmall );
+
+        mesh.add(pivot2);
+        
+        
+        
+        bbox = new THREE.Box3();
+        cent = new THREE.Vector3();
+        //bbox.setFromObject(helice);
+        bbox.setFromObject(helicesmall);
+        bbox.getCenter(cent);
+
+        helicesmall.traverse(function(child) {
+            if (child instanceof THREE.Mesh) {
+                child.geometry.translate(-cent.x, -cent.y, -cent.z);
+            }
+        });
+       
+        //helice.position.set(cent.x, cent.y, cent.z);
+        helicesmall.position.set(cent.x, cent.y, cent.z);
+
+        //// fin elice small
+
+        ///// luces
+
+        /*const sphere = new THREE.SphereGeometry( 0.2, 16, 8 );
+        light1 = new THREE.PointLight( 0xff0000, 210, 50 );
+		light1.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xff0000 } ) ) );
+		scene.add( light1 );
+        */
+
+        helilight =mesh.getObjectByName('Object_5'); 
+        /*
+        helilight.material.transparent = true;
+        helilight.transparent = true;
+        helilight.material.opacity = 0.3;
+        helilight.material.alphaToCoverage =true;
+        helilight.material.aoMapIntensity = 0.5;
+        helilight.material.envMapIntensity = 0.5;
+        */
+
+        const sphere = new THREE.SphereGeometry( 0.2, 16, 8 );
+        light1 = new THREE.PointLight( 0xff0000, 10, 150, 0.5 );
+		//light1.add( helilight );
+        light1.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffFFFF } ) ) );
+        //light1.add( helilight );
+        light1.position.x = helilight.position.x-16.001;
+        light1.position.y = helilight.position.y+5.5;
+        light1.position.z = helilight.position.z-15.876;
+
+        
+        //,helilight.position.y,helilight.position.z);
+		mesh.add( light1 );
+
+        
+
+        //// fin luces
+
+
+
+        //mesh.position.set(4, 0, 0);
+        box  = drawBox(objectwidth,objectheight,objectdepth); 
+        group.add(box);
+        group.name = "quadrant";
+        console.log(mesh);
+        box.add( mesh);
+ });
+ return group;
+};
+
+function addHeliPad(){ 
+        
+        
+        const geometry = new THREE.CylinderGeometry( 40, 40, 1, 40 );
+//        const material = new THREE.MeshBasicMaterial( {color: 0x333333} );
+
+        //texture = THREE.ImageUtils.loadTexture('Material.001_baseColor.jpg');
+        //const material = new THREE.MeshBasicMaterial({map: texture})
+
+        var material = new THREE.MeshLambertMaterial({ map: THREE.ImageUtils.loadTexture("Material.001_baseColor.png") });
+        
+        var cylinder = new THREE.Mesh( geometry, material );
+        cylinder.castShadow = true
+        cylinder.receiveShadow = true
+        cylinder.position.y = 1.5;
+
+        return cylinder;
+
+
+}
+
+</script>
+</body>
+</html>

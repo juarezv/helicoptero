@@ -1,0 +1,11 @@
+Model Information:
+* title:	Ah-1W Hueycobra
+* source:	https://sketchfab.com/3d-models/ah-1w-hueycobra-f1f3f87f4cc24117ba796ff2ff05718f
+* author:	erty546453 (https://sketchfab.com/erty546453)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Ah-1W Hueycobra" (https://sketchfab.com/3d-models/ah-1w-hueycobra-f1f3f87f4cc24117ba796ff2ff05718f) by erty546453 (https://sketchfab.com/erty546453) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
